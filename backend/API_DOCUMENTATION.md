@@ -12,8 +12,18 @@ Authorization: Bearer <your-jwt-token>
 ```
 
 ## Rate Limiting
-- Registration: 5 requests per hour per IP
-- Login: 5 requests per 15 minutes per IP
+- **Registration**: 5 requests per hour per IP ✅ **ACTIVE**
+- **Login**: ⚠️ **TEMPORARILY DISABLED** (for debugging)
+- **Other endpoints**: No rate limiting
+
+## CORS Configuration
+- **Current**: Very permissive (allows all origins) for development/testing
+- **Headers**: All common headers allowed including Authorization
+- **Methods**: GET, POST, PUT, DELETE, OPTIONS
+
+## Security Middleware
+- **Helmet**: ⚠️ **TEMPORARILY DISABLED** (for debugging)
+- **Request Logging**: ✅ **ACTIVE** (comprehensive debug logging enabled)
 
 ---
 
@@ -21,6 +31,8 @@ Authorization: Bearer <your-jwt-token>
 
 ### POST /register
 Register a new user account.
+
+**Rate Limiting**: ✅ 5 requests per hour per IP
 
 **Request Body:**
 ```json
@@ -54,15 +66,25 @@ Register a new user account.
     "firstName": "John",
     "lastName": "Doe",
     "membershipType": "STANDARD",
-    "membershipDate": "2024-08-05",
-    "createdAt": "2024-08-05T08:00:00.000Z"
+    "membershipDate": "2024-01-01T00:00:00.000Z",
+    "createdAt": "2024-01-01T00:00:00.000Z"
   },
   "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 }
 ```
 
+**Error Responses:**
+- `400`: Validation error
+- `409`: User already exists
+- `429`: Rate limit exceeded
+- `500`: Internal server error
+
+---
+
 ### POST /login
-Authenticate user and get JWT token.
+Authenticate an existing user.
+
+**Rate Limiting**: ⚠️ **TEMPORARILY DISABLED** (for debugging)
 
 **Request Body:**
 ```json
@@ -71,6 +93,10 @@ Authenticate user and get JWT token.
   "password": "password123"
 }
 ```
+
+**Validation Rules:**
+- `email`: Valid email format (required)
+- `password`: Required
 
 **Success Response (200):**
 ```json
@@ -87,23 +113,30 @@ Authenticate user and get JWT token.
 }
 ```
 
+**Error Responses:**
+- `400`: Validation error
+- `401`: Invalid credentials
+- `500`: Internal server error
+
 ---
 
 ## 📚 Books Endpoints
 
 ### GET /books
-Get all books with optional filtering and pagination.
+Retrieve a paginated list of books with optional filtering.
+
+**Authentication**: Not required (public endpoint)
 
 **Query Parameters:**
-- `page`: Page number (default: 1)
-- `limit`: Items per page (default: 10)
-- `category`: Filter by category (case-insensitive)
-- `author`: Filter by author (case-insensitive)
-- `search`: Search in title, author, or description (case-insensitive)
+- `page` (optional): Page number (default: 1)
+- `limit` (optional): Items per page (default: 10)
+- `category` (optional): Filter by category (case-insensitive)
+- `author` (optional): Filter by author (case-insensitive)
+- `search` (optional): Search in title, author, or description (case-insensitive)
 
-**Example:**
+**Example Request:**
 ```
-GET /books?page=1&limit=5&category=fiction&search=dan brown
+GET /books?page=1&limit=5&category=fiction&search=javascript
 ```
 
 **Success Response (200):**
@@ -112,83 +145,86 @@ GET /books?page=1&limit=5&category=fiction&search=dan brown
   "books": [
     {
       "bookId": 1,
-      "isbn": "978-0-7432-7356-5",
-      "title": "The Da Vinci Code",
-      "author": "Dan Brown",
-      "publisher": "Doubleday",
-      "publicationYear": 2003,
-      "category": "Fiction",
-      "language": "English",
-      "pages": 454,
-      "description": "A mystery thriller novel",
-      "locationShelf": "A1-001",
-      "totalCopies": 3,
-      "availableCopies": 2,
-      "createdAt": "2024-08-05T08:00:00.000Z",
-      "updatedAt": "2024-08-05T08:00:00.000Z"
+      "title": "Clean Code",
+      "author": "Robert C. Martin",
+      "isbn": "978-0132350884",
+      "category": "Programming",
+      "totalCopies": 5,
+      "availableCopies": 3,
+      "description": "A Handbook of Agile Software Craftsmanship",
+      "publishedYear": 2008,
+      "createdAt": "2024-01-01T00:00:00.000Z"
     }
   ],
   "pagination": {
-    "total": 10,
+    "total": 25,
     "page": 1,
-    "limit": 5,
-    "totalPages": 2
+    "limit": 10,
+    "totalPages": 3
   }
 }
 ```
 
+---
+
 ### GET /books/:id
-Get a specific book by ID with current borrowers.
+Retrieve details of a specific book including current borrowers.
+
+**Authentication**: Not required (public endpoint)
+
+**URL Parameters:**
+- `id`: Book ID (integer)
 
 **Success Response (200):**
 ```json
 {
   "bookId": 1,
-  "isbn": "978-0-7432-7356-5",
-  "title": "The Da Vinci Code",
-  "author": "Dan Brown",
-  "publisher": "Doubleday",
-  "publicationYear": 2003,
-  "category": "Fiction",
-  "language": "English",
-  "pages": 454,
-  "description": "A mystery thriller novel",
-  "locationShelf": "A1-001",
-  "totalCopies": 3,
-  "availableCopies": 2,
-  "createdAt": "2024-08-05T08:00:00.000Z",
-  "updatedAt": "2024-08-05T08:00:00.000Z",
+  "title": "Clean Code",
+  "author": "Robert C. Martin",
+  "isbn": "978-0132350884",
+  "category": "Programming",
+  "totalCopies": 5,
+  "availableCopies": 3,
+  "description": "A Handbook of Agile Software Craftsmanship",
+  "publishedYear": 2008,
+  "createdAt": "2024-01-01T00:00:00.000Z",
   "borrowRecords": [
     {
       "borrowId": 1,
-      "userId": 1,
-      "bookId": 1,
-      "borrowDate": "2024-08-01",
-      "dueDate": "2024-08-15",
+      "userId": 2,
+      "borrowDate": "2024-01-15T00:00:00.000Z",
+      "dueDate": "2024-01-29T00:00:00.000Z",
       "status": "BORROWED",
       "user": {
-        "firstName": "John",
-        "lastName": "Doe",
-        "email": "john.doe@email.com"
+        "firstName": "Jane",
+        "lastName": "Smith",
+        "email": "jane@example.com"
       }
     }
   ]
 }
 ```
 
+**Error Responses:**
+- `400`: Invalid book ID
+- `404`: Book not found
+- `500`: Internal server error
+
 ---
 
-## 🔄 Borrowing Endpoints
+## 📋 Borrowing Endpoints
 
 ### POST /borrow
 Borrow a book (requires authentication).
+
+**Authentication**: Required (JWT token)
 
 **Request Body:**
 ```json
 {
   "userId": 1,
-  "bookId": 1,
-  "dueDate": "2024-08-20"
+  "bookId": 5,
+  "dueDate": "2024-02-15T00:00:00.000Z"
 }
 ```
 
@@ -204,30 +240,36 @@ Borrow a book (requires authentication).
   "borrowRecord": {
     "borrowId": 1,
     "userId": 1,
-    "bookId": 1,
-    "borrowDate": "2024-08-05",
-    "dueDate": "2024-08-19",
+    "bookId": 5,
+    "borrowDate": "2024-01-15T00:00:00.000Z",
+    "dueDate": "2024-01-29T00:00:00.000Z",
     "status": "BORROWED",
     "user": {
       "firstName": "John",
       "lastName": "Doe",
-      "email": "john.doe@email.com"
+      "email": "john@example.com"
     },
     "book": {
-      "title": "The Da Vinci Code",
-      "author": "Dan Brown",
-      "isbn": "978-0-7432-7356-5"
+      "title": "JavaScript: The Good Parts",
+      "author": "Douglas Crockford",
+      "isbn": "978-0596517748"
     }
   }
 }
 ```
 
 **Error Responses:**
-- `400`: Book not available, user already has this book, validation errors
+- `400`: Validation error or book not available
+- `401`: Authentication required
 - `404`: Book not found
+- `500`: Internal server error
+
+---
 
 ### POST /return
 Return a borrowed book (requires authentication).
+
+**Authentication**: Required (JWT token)
 
 **Request Body:**
 ```json
@@ -243,46 +285,48 @@ Return a borrowed book (requires authentication).
   "borrowRecord": {
     "borrowId": 1,
     "userId": 1,
-    "bookId": 1,
-    "borrowDate": "2024-08-05",
-    "dueDate": "2024-08-19",
-    "returnDate": "2024-08-18",
+    "bookId": 5,
+    "borrowDate": "2024-01-15T00:00:00.000Z",
+    "dueDate": "2024-01-29T00:00:00.000Z",
+    "returnDate": "2024-01-25T00:00:00.000Z",
     "status": "RETURNED",
-    "fineAmount": 0.00,
+    "fineAmount": 0,
     "user": {
       "firstName": "John",
       "lastName": "Doe",
-      "email": "john.doe@email.com"
+      "email": "john@example.com"
     },
     "book": {
-      "title": "The Da Vinci Code",
-      "author": "Dan Brown",
-      "isbn": "978-0-7432-7356-5"
+      "title": "JavaScript: The Good Parts",
+      "author": "Douglas Crockford",
+      "isbn": "978-0596517748"
     }
   },
   "fine": "No fine"
 }
 ```
 
-**Fine Calculation:**
-- $1.00 per day overdue
-- Automatically calculated and applied
+**Error Responses:**
+- `400`: Missing borrow ID or book already returned
+- `401`: Authentication required
+- `404`: Borrow record not found
+- `500`: Internal server error
 
 ---
 
-## 👤 User Endpoints
-
 ### GET /my-borrows/:userId
-Get user's borrowing history (requires authentication).
+Get borrowing history for a user (requires authentication).
+
+**Authentication**: Required (JWT token)
+**Authorization**: Users can only access their own records or staff/admin can access any
+
+**URL Parameters:**
+- `userId`: User ID (integer)
 
 **Query Parameters:**
-- `status`: Filter by status (all, BORROWED, RETURNED, OVERDUE) (default: all)
-- `page`: Page number (default: 1)
-- `limit`: Items per page (default: 10)
-
-**Authorization:**
-- Users can only access their own records
-- STAFF and ADMIN can access any user's records
+- `status` (optional): Filter by status (all, BORROWED, RETURNED, OVERDUE) (default: all)
+- `page` (optional): Page number (default: 1)
+- `limit` (optional): Items per page (default: 10)
 
 **Success Response (200):**
 ```json
@@ -290,18 +334,17 @@ Get user's borrowing history (requires authentication).
   "borrowRecords": [
     {
       "borrowId": 1,
-      "userId": 1,
-      "bookId": 1,
-      "borrowDate": "2024-08-05",
-      "dueDate": "2024-08-19",
-      "returnDate": null,
-      "status": "BORROWED",
-      "fineAmount": 0.00,
+      "bookId": 5,
+      "borrowDate": "2024-01-15T00:00:00.000Z",
+      "dueDate": "2024-01-29T00:00:00.000Z",
+      "returnDate": "2024-01-25T00:00:00.000Z",
+      "status": "RETURNED",
+      "fineAmount": 0,
       "book": {
-        "title": "The Da Vinci Code",
-        "author": "Dan Brown",
-        "isbn": "978-0-7432-7356-5",
-        "category": "Fiction"
+        "title": "JavaScript: The Good Parts",
+        "author": "Douglas Crockford",
+        "isbn": "978-0596517748",
+        "category": "Programming"
       }
     }
   ],
@@ -314,182 +357,222 @@ Get user's borrowing history (requires authentication).
 }
 ```
 
+**Error Responses:**
+- `400`: Invalid user ID
+- `401`: Authentication required
+- `403`: Access denied (not your records and not staff/admin)
+- `500`: Internal server error
+
+---
+
+## 👤 User Profile Endpoints
+
 ### GET /profile
-Get current user's profile (requires authentication).
+Get current user's profile information (requires authentication).
+
+**Authentication**: Required (JWT token)
 
 **Success Response (200):**
 ```json
 {
   "user": {
     "userId": 1,
-    "email": "john.doe@email.com",
+    "email": "john@example.com",
     "firstName": "John",
     "lastName": "Doe",
     "phone": "555-0123",
     "address": "123 Main St",
     "membershipType": "STANDARD",
-    "membershipDate": "2024-08-05",
+    "membershipDate": "2024-01-01T00:00:00.000Z",
     "isActive": true,
-    "createdAt": "2024-08-05T08:00:00.000Z"
+    "createdAt": "2024-01-01T00:00:00.000Z"
   }
 }
 ```
 
+**Error Responses:**
+- `401`: Authentication required
+- `500`: Internal server error
+
 ---
 
-## 🏥 Health Check
+## 🔧 Utility Endpoints
 
 ### GET /health
-Check if the API is running.
+Health check endpoint to verify the API is running.
+
+**Authentication**: Not required (public endpoint)
 
 **Success Response (200):**
 ```json
 {
   "status": "OK",
   "message": "Library App Backend is running",
-  "timestamp": "2024-08-05T08:00:00.000Z"
+  "timestamp": "2024-01-15T12:00:00.000Z"
 }
 ```
 
 ---
 
-## 🚨 Error Responses
+### ALL /test
+Debug endpoint for testing API connectivity (temporary).
 
-### Common Error Formats
+**Authentication**: Not required (public endpoint)
+**Methods**: GET, POST, PUT, DELETE, OPTIONS
 
-**Validation Error (400):**
+**Success Response (200):**
 ```json
 {
-  "error": "\"email\" must be a valid email"
-}
-```
-
-**Authentication Error (401):**
-```json
-{
-  "error": "Access token required"
-}
-```
-
-**Authorization Error (403):**
-```json
-{
-  "error": "Access denied"
-}
-```
-
-**Not Found Error (404):**
-```json
-{
-  "error": "Book not found"
-}
-```
-
-**Conflict Error (409):**
-```json
-{
-  "error": "User with this email already exists"
-}
-```
-
-**Rate Limit Error (429):**
-```json
-{
-  "error": "Too many login attempts from this IP, please try again after 15 minutes."
-}
-```
-
-**Server Error (500):**
-```json
-{
-  "error": "Internal server error"
+  "message": "Test endpoint works",
+  "method": "GET",
+  "headers": {
+    "user-agent": "PostmanRuntime/7.45.0",
+    "accept": "*/*",
+    "host": "localhost:3001"
+  },
+  "timestamp": "2024-01-15T12:00:00.000Z"
 }
 ```
 
 ---
 
-## 🧪 Testing Examples
+## 🚨 Error Handling
 
-### Using curl
+### Standard Error Response Format
+```json
+{
+  "error": "Error message description"
+}
+```
 
-**Register a new user:**
+### HTTP Status Codes
+- `200`: Success
+- `201`: Created successfully
+- `400`: Bad Request (validation error)
+- `401`: Unauthorized (authentication required)
+- `403`: Forbidden (insufficient permissions)
+- `404`: Not Found
+- `409`: Conflict (resource already exists)
+- `429`: Too Many Requests (rate limit exceeded)
+- `500`: Internal Server Error
+
+---
+
+## 🧪 Testing Guide
+
+### Prerequisites
+1. Start the Docker containers:
+   ```bash
+   docker-compose up -d db backend
+   ```
+
+2. Wait for containers to be healthy:
+   ```bash
+   docker-compose ps
+   ```
+
+### Test Data Setup
+The system comes with seeded data. To create a test user for API testing:
+
+**Register a test user:**
 ```bash
 curl -X POST http://localhost:3001/register \
   -H "Content-Type: application/json" \
   -d '{
-    "email": "test@example.com",
+    "email": "test.user@example.com",
     "firstName": "Test",
-    "lastName": "User",
-    "password": "password123"
+    "lastName": "User", 
+    "password": "testpass123",
+    "membershipType": "STANDARD"
   }'
 ```
 
-**Login:**
+**Login and get token:**
 ```bash
 curl -X POST http://localhost:3001/login \
   -H "Content-Type: application/json" \
   -d '{
-    "email": "test@example.com",
-    "password": "password123"
+    "email": "test.user@example.com",
+    "password": "testpass123"
   }'
 ```
 
-**Get books:**
-```bash
-curl -X GET "http://localhost:3001/books?page=1&limit=5&search=dan"
-```
+### Test Credentials
+- **Email**: `test.user@example.com`
+- **Password**: `testpass123`
+- **User ID**: Will be returned in login response
 
-**Borrow a book (with auth token):**
-```bash
-curl -X POST http://localhost:3001/borrow \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
-  -d '{
-    "userId": 1,
-    "bookId": 1
-  }'
-```
+### Common Test Scenarios
 
-### Testing with existing users
-You can login with any of these test accounts (password: "password123"):
-- john.doe@email.com
-- jane.smith@email.com  
-- bob.johnson@email.com
-- alice.brown@email.com
+1. **Health Check**:
+   ```bash
+   curl http://localhost:3001/health
+   ```
+
+2. **Get All Books**:
+   ```bash
+   curl http://localhost:3001/books
+   ```
+
+3. **Search Books**:
+   ```bash
+   curl "http://localhost:3001/books?search=javascript&category=programming"
+   ```
+
+4. **Authenticated Request** (replace TOKEN with actual JWT):
+   ```bash
+   curl -X GET http://localhost:3001/profile \
+     -H "Authorization: Bearer YOUR_JWT_TOKEN"
+   ```
+
+### Debugging
+- **Debug Logging**: All requests are logged with detailed information
+- **CORS**: Very permissive for development (allows all origins)
+- **Rate Limiting**: Disabled on login endpoint for testing
 
 ---
 
-## 🔧 Environment Variables
+## 🔒 Security Notes
 
-Create a `.env` file in the backend directory:
+### Current Development Configuration
+⚠️ **This configuration is for development/testing only**
 
-```env
-DATABASE_URL="postgresql://admin:admin123@db:5432/library_db?schema=public"
-PORT=5000
-NODE_ENV=development
-FRONTEND_URL=http://localhost:3000
-JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
-```
+- **CORS**: Very permissive (allows all origins)
+- **Rate Limiting**: Partially disabled for debugging
+- **Helmet**: Temporarily disabled
+- **Debug Logging**: Comprehensive request logging enabled
+
+### Production Recommendations
+For production deployment, ensure:
+- ✅ Enable Helmet security headers
+- ✅ Configure strict CORS origins
+- ✅ Enable all rate limiting
+- ✅ Disable debug logging
+- ✅ Use secure JWT secrets
+- ✅ Enable HTTPS
+- ✅ Use environment variables for all secrets
+
+### JWT Configuration
+- **Default Secret**: `your-super-secret-jwt-key-change-this-in-production`
+- **Token Expiry**: 24 hours
+- **Algorithm**: HS256
 
 ---
 
-## 🚀 Running the API
+## 📝 Change Log
 
-1. **Install dependencies:**
-   ```bash
-   cd backend
-   npm install
-   ```
+### Current Version (Latest)
+- ✅ Base URL updated to `localhost:3001` (resolved port conflict)
+- ⚠️ Login rate limiting temporarily disabled for debugging
+- ⚠️ Helmet security headers temporarily disabled
+- ✅ Comprehensive debug logging enabled
+- ✅ CORS configured for development (very permissive)
+- ✅ Test endpoint `/test` added for debugging
+- ✅ Server binding fixed to `0.0.0.0` for external access
 
-2. **Generate Prisma client:**
-   ```bash
-   npx prisma generate
-   ```
-
-3. **Start the server:**
-   ```bash
-   npm run dev  # Development mode
-   npm start    # Production mode
-   ```
-
-The API will be available at `http://localhost:3001`
+### Previous Versions
+- Initial API implementation with full security middleware
+- Registration, login, books, borrowing, and profile endpoints
+- JWT authentication with proper validation
+- Rate limiting on registration and login
+- Comprehensive error handling and validation
