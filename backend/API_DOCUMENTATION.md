@@ -2,7 +2,7 @@
 
 ## Base URL
 ```
-http://localhost:5000
+http://localhost:3001
 ```
 
 ## Authentication
@@ -414,7 +414,7 @@ Check if the API is running.
 
 **Register a new user:**
 ```bash
-curl -X POST http://localhost:5000/register \
+curl -X POST http://localhost:3001/register \
   -H "Content-Type: application/json" \
   -d '{
     "email": "test@example.com",
@@ -426,7 +426,7 @@ curl -X POST http://localhost:5000/register \
 
 **Login:**
 ```bash
-curl -X POST http://localhost:5000/login \
+curl -X POST http://localhost:3001/login \
   -H "Content-Type: application/json" \
   -d '{
     "email": "test@example.com",
@@ -436,12 +436,12 @@ curl -X POST http://localhost:5000/login \
 
 **Get books:**
 ```bash
-curl -X GET "http://localhost:5000/books?page=1&limit=5&search=dan"
+curl -X GET "http://localhost:3001/books?page=1&limit=5&search=dan"
 ```
 
 **Borrow a book (with auth token):**
 ```bash
-curl -X POST http://localhost:5000/borrow \
+curl -X POST http://localhost:3001/borrow \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -d '{
@@ -492,4 +492,4 @@ JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
    npm start    # Production mode
    ```
 
-The API will be available at `http://localhost:5000`
+The API will be available at `http://localhost:3001`
