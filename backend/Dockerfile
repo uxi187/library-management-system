@@ -1,5 +1,8 @@
 FROM node:18-alpine
 
+# Install OpenSSL for Prisma compatibility and curl for health checks
+RUN apk add --no-cache openssl curl
+
 # Set working directory
 WORKDIR /app
 
@@ -31,8 +34,8 @@ USER nodejs
 EXPOSE 5000
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:5000/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+  CMD curl -f http://127.0.0.1:5000/health || exit 1
 
 # Start the application
 CMD ["npm", "start"]
