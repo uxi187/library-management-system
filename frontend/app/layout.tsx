@@ -17,7 +17,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning={true}>
       <body className={inter.className}>
         <AuthProvider>
           <div className="min-h-screen bg-gray-50">
@@ -27,6 +27,8 @@ export default function RootLayout({
             </main>
           </div>
         </AuthProvider>
+        
+
       </body>
     </html>
   )

@@ -204,18 +204,21 @@ const HomePage: React.FC = () => {
             <Link
               key={book.id}
               href={`/book/${book.id}`}
-              className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-200"
+              className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-200 flex flex-col"
             >
               <div className="aspect-w-3 aspect-h-4 bg-gradient-to-br from-primary-100 to-primary-200">
                 <div className="flex items-center justify-center">
                   <BookOpenIcon className="h-16 w-16 text-primary-400" />
                 </div>
               </div>
-              <div className="p-4">
-                <h3 className="font-semibold text-gray-900 line-clamp-2 mb-2">
+              <div className="p-4 flex flex-col h-full">
+                {/* Fixed height title section */}
+                <h3 className="font-semibold text-gray-900 line-clamp-2 mb-2 min-h-[3rem] flex items-start">
                   {book.title}
                 </h3>
-                <div className="space-y-2 text-sm text-gray-600">
+                
+                {/* Flexible content section */}
+                <div className="flex-1 space-y-2 text-sm text-gray-600">
                   <div className="flex items-center">
                     <UserIcon className="h-4 w-4 mr-2 flex-shrink-0" />
                     <span className="truncate">{book.author?.name || 'Unknown Author'}</span>
@@ -231,7 +234,9 @@ const HomePage: React.FC = () => {
                     </div>
                   )}
                 </div>
-                <div className="mt-3 pt-3 border-t border-gray-200">
+                
+                {/* Fixed position status section */}
+                <div className="mt-auto pt-3 border-t border-gray-200">
                   <div className="flex justify-between items-center text-sm">
                     <span className="text-gray-500">Status:</span>
                     <span className={`font-medium ${
