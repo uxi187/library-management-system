@@ -21,6 +21,8 @@ services:
       dockerfile: Dockerfile.dev
     environment:
       NODE_ENV: development
+      NEXT_PUBLIC_API_URL: http://localhost:3001
+      NEXT_TELEMETRY_DISABLED: 1
     volumes:
       - ./frontend:/app
       - /app/node_modules

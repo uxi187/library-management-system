@@ -1,92 +1,234 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+import axios, { AxiosResponse, AxiosError } from 'axios';
 
-class ApiError extends Error {
-  status: number;
-  
-  constructor(message: string, status: number) {
-    super(message);
-    this.name = 'ApiError';
-    this.status = status;
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
+// Create axios instance
+const apiClient = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  timeout: 10000,
+});
+
+// Request interceptor to add auth token
+apiClient.interceptors.request.use(
+  (config) => {
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('token');
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
   }
+);
+
+// Response interceptor for error handling
+apiClient.interceptors.response.use(
+  (response: AxiosResponse) => response,
+  (error: AxiosError) => {
+    if (error.response?.status === 401) {
+      // Token expired or invalid
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
+// Types
+export interface User {
+  userId: number;
+  email: string;
+  firstName: string;
+  lastName: string;
+  phone?: string;
+  address?: string;
+  membershipType: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
-async function fetchApi<T>(
-  endpoint: string,
-  options: RequestInit = {}
-): Promise<T> {
-  const url = `${API_BASE_URL}${endpoint}`;
-  
-  const config: RequestInit = {
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-    ...options,
+export interface Book {
+  id: string;
+  title: string;
+  isbn?: string;
+  publishedYear?: number;
+  description?: string;
+  available: boolean;
+  createdAt: string;
+  updatedAt: string;
+  authorId: string;
+  categoryId: string;
+  author?: {
+    id: string;
+    name: string;
+    bio?: string;
+    birthYear?: number;
   };
+  category?: {
+    id: string;
+    name: string;
+    description?: string;
+  };
+}
 
-  try {
-    const response = await fetch(url, config);
-    
-    if (!response.ok) {
-      throw new ApiError(
-        `HTTP ${response.status}: ${response.statusText}`,
-        response.status
-      );
-    }
+export interface BookWithBorrows extends Book {
+  borrowings: BorrowRecord[];
+}
 
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    if (error instanceof ApiError) {
-      throw error;
-    }
-    
-    // Network or other errors
-    throw new ApiError('Network error or server unavailable', 0);
-  }
+export interface BorrowRecord {
+  id: string;
+  userId: number;
+  bookId: string;
+  borrowedAt: string;
+  dueDate: string;
+  returnedAt?: string;
+  status: 'ACTIVE' | 'RETURNED' | 'OVERDUE';
+  user?: {
+    userId: number;
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
+  book?: {
+    title: string;
+    author: {
+      id: string;
+      name: string;
+      bio?: string;
+      birthYear?: number;
+      createdAt: string;
+      updatedAt: string;
+    };
+    isbn: string;
+    category: {
+      id: string;
+      name: string;
+      description?: string;
+      createdAt: string;
+      updatedAt: string;
+    };
+  };
+}
+
+export interface RegisterData {
+  email: string;
+  firstName: string;
+  lastName: string;
+  password: string;
+  phone?: string;
+  address?: string;
+  membershipType?: 'STANDARD' | 'PREMIUM' | 'STUDENT' | 'STAFF';
+}
+
+export interface LoginData {
+  email: string;
+  password: string;
+}
+
+export interface AuthResponse {
+  message: string;
+  user: User;
+  token: string;
+}
+
+export interface PaginatedResponse<T> {
+  books?: T[];
+  borrowRecords?: T[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
 }
 
 // API functions
 export const api = {
+  // Authentication
+  auth: {
+    register: async (data: RegisterData): Promise<AuthResponse> => {
+      const response = await apiClient.post<AuthResponse>('/register', data);
+      return response.data;
+    },
+    
+    login: async (data: LoginData): Promise<AuthResponse> => {
+      const response = await apiClient.post<AuthResponse>('/login', data);
+      return response.data;
+    },
+    
+    getProfile: async (): Promise<{ user: User }> => {
+      const response = await apiClient.get<{ user: User }>('/profile');
+      return response.data;
+    },
+  },
+
   // Books
   books: {
-    getAll: () => fetchApi<any[]>('/api/books'),
-    getById: (id: string) => fetchApi<any>(`/api/books/${id}`),
-    create: (data: any) => fetchApi<any>('/api/books', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    }),
-    update: (id: string, data: any) => fetchApi<any>(`/api/books/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    }),
-    delete: (id: string) => fetchApi<void>(`/api/books/${id}`, {
-      method: 'DELETE',
-    }),
+    getAll: async (params?: {
+      page?: number;
+      limit?: number;
+      category?: string;
+      author?: string;
+      search?: string;
+    }): Promise<PaginatedResponse<Book>> => {
+      const response = await apiClient.get<PaginatedResponse<Book>>('/books', { params });
+      return response.data;
+    },
+    
+    getById: async (id: string): Promise<BookWithBorrows> => {
+      const response = await apiClient.get<BookWithBorrows>(`/books/${id}`);
+      return response.data;
+    },
   },
 
-  // Authors
-  authors: {
-    getAll: () => fetchApi<any[]>('/api/authors'),
-    getById: (id: string) => fetchApi<any>(`/api/authors/${id}`),
-    create: (data: any) => fetchApi<any>('/api/authors', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    }),
-  },
-
-  // Categories
-  categories: {
-    getAll: () => fetchApi<any[]>('/api/categories'),
-    getById: (id: string) => fetchApi<any>(`/api/categories/${id}`),
-    create: (data: any) => fetchApi<any>('/api/categories', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    }),
+  // Borrowing
+  borrowing: {
+    borrow: async (bookId: string, userId: string): Promise<{ message: string; borrowRecord: BorrowRecord }> => {
+      const response = await apiClient.post<{ message: string; borrowRecord: BorrowRecord }>('/borrow', {
+        bookId,
+        userId,
+      });
+      return response.data;
+    },
+    
+    return: async (borrowId: string): Promise<{ message: string; borrowRecord: BorrowRecord }> => {
+      const response = await apiClient.post<{ message: string; borrowRecord: BorrowRecord }>('/return', {
+        borrowId,
+      });
+      return response.data;
+    },
+    
+    getUserBorrows: async (
+      userId: string,
+      params?: {
+        status?: 'all' | 'ACTIVE' | 'RETURNED' | 'OVERDUE';
+        page?: number;
+        limit?: number;
+      }
+    ): Promise<PaginatedResponse<BorrowRecord>> => {
+      const response = await apiClient.get<PaginatedResponse<BorrowRecord>>(
+        `/my-borrows/${userId}`,
+        { params }
+      );
+      return response.data;
+    },
   },
 
   // Health check
-  health: () => fetchApi<{ status: string; message: string; timestamp: string }>('/health'),
+  health: async (): Promise<{ status: string; message: string; timestamp: string }> => {
+    const response = await apiClient.get<{ status: string; message: string; timestamp: string }>('/health');
+    return response.data;
+  },
 };
 
-export { ApiError };
+export default apiClient;

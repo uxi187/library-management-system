@@ -72,8 +72,8 @@ const loginSchema = joi.object({
 });
 
 const borrowSchema = joi.object({
-  userId: joi.number().integer().positive().required(),
-  bookId: joi.number().integer().positive().required(),
+  userId: joi.string().required(),
+  bookId: joi.string().required(),
   dueDate: joi.date().optional()
 });
 
@@ -165,7 +165,7 @@ app.post('/register', createAccountLimiter, async (req, res) => {
         firstName: true,
         lastName: true,
         membershipType: true,
-        membershipDate: true,
+        membershipType: true,
         createdAt: true
       }
     });
@@ -250,17 +250,25 @@ app.get('/books', async (req, res) => {
     let where = {};
     
     if (category) {
-      where.category = { contains: category, mode: 'insensitive' };
+      where.category = { 
+        name: { contains: category, mode: 'insensitive' }
+      };
     }
     
     if (author) {
-      where.author = { contains: author, mode: 'insensitive' };
+      where.author = { 
+        name: { contains: author, mode: 'insensitive' }
+      };
     }
     
     if (search) {
       where.OR = [
         { title: { contains: search, mode: 'insensitive' } },
-        { author: { contains: search, mode: 'insensitive' } },
+        { 
+          author: { 
+            name: { contains: search, mode: 'insensitive' }
+          }
+        },
         { description: { contains: search, mode: 'insensitive' } }
       ];
     }
@@ -270,7 +278,11 @@ app.get('/books', async (req, res) => {
         where,
         skip: parseInt(skip),
         take: parseInt(limit),
-        orderBy: { title: 'asc' }
+        orderBy: { title: 'asc' },
+        include: {
+          author: true,
+          category: true
+        }
       }),
       prisma.book.count({ where })
     ]);
@@ -294,22 +306,25 @@ app.get('/books', async (req, res) => {
 // Get book by ID
 app.get('/books/:id', async (req, res) => {
   try {
-    const bookId = parseInt(req.params.id);
+    const bookId = req.params.id;
     
-    if (isNaN(bookId)) {
+    if (!bookId || typeof bookId !== 'string') {
       return res.status(400).json({ error: 'Invalid book ID' });
     }
 
     const book = await prisma.book.findUnique({
-      where: { bookId },
+      where: { id: bookId },
       include: {
-        borrowRecords: {
-          where: { status: { in: ['BORROWED', 'OVERDUE'] } },
+        author: true,
+        category: true,
+        borrowings: {
+          where: { status: { in: ['ACTIVE', 'OVERDUE'] } },
           include: {
             user: {
               select: { firstName: true, lastName: true, email: true }
             }
-          }
+          },
+          orderBy: { borrowedAt: 'desc' }
         }
       }
     });
@@ -338,30 +353,52 @@ app.post('/borrow', authenticateToken, async (req, res) => {
 
     const { userId, bookId, dueDate } = value;
 
+    // Convert userId to integer to match database schema
+    const userIdInt = parseInt(userId, 10);
+
     // Check if book exists and is available
     const book = await prisma.book.findUnique({
-      where: { bookId }
+      where: { id: bookId }
     });
 
     if (!book) {
       return res.status(404).json({ error: 'Book not found' });
     }
 
-    if (book.availableCopies <= 0) {
+    if (!book.available) {
       return res.status(400).json({ error: 'Book is not available for borrowing' });
     }
 
     // Check if user already has this book borrowed
-    const existingBorrow = await prisma.borrowRecord.findFirst({
+    const userExistingBorrow = await prisma.borrowing.findFirst({
       where: {
-        userId,
+        userId: userIdInt,
         bookId,
-        status: { in: ['BORROWED', 'OVERDUE'] }
+        status: { in: ['ACTIVE', 'OVERDUE'] }
       }
     });
 
-    if (existingBorrow) {
-      return res.status(400).json({ error: 'User already has this book borrowed' });
+    if (userExistingBorrow) {
+      return res.status(400).json({ error: 'You have already borrowed this book' });
+    }
+
+    // Check if book is currently borrowed by any user
+    const anyActiveBorrow = await prisma.borrowing.findFirst({
+      where: {
+        bookId,
+        status: { in: ['ACTIVE', 'OVERDUE'] }
+      },
+      include: {
+        user: {
+          select: { firstName: true, lastName: true }
+        }
+      }
+    });
+
+    if (anyActiveBorrow) {
+      return res.status(400).json({ 
+        error: `This book is currently borrowed by ${anyActiveBorrow.user.firstName} ${anyActiveBorrow.user.lastName}` 
+      });
     }
 
     // Calculate due date (14 days from now if not provided)
@@ -369,12 +406,12 @@ app.post('/borrow', authenticateToken, async (req, res) => {
 
     // Create borrow record and update book availability in a transaction
     const result = await prisma.$transaction(async (tx) => {
-      const borrowRecord = await tx.borrowRecord.create({
+      const borrowRecord = await tx.borrowing.create({
         data: {
-          userId,
+          userId: userIdInt,
           bookId,
           dueDate: calculatedDueDate,
-          status: 'BORROWED'
+          status: 'ACTIVE'
         },
         include: {
           user: {
@@ -387,8 +424,8 @@ app.post('/borrow', authenticateToken, async (req, res) => {
       });
 
       await tx.book.update({
-        where: { bookId },
-        data: { availableCopies: { decrement: 1 } }
+        where: { id: bookId },
+        data: { available: false }
       });
 
       return borrowRecord;
@@ -415,8 +452,8 @@ app.post('/return', authenticateToken, async (req, res) => {
     }
 
     // Find the borrow record
-    const borrowRecord = await prisma.borrowRecord.findUnique({
-      where: { borrowId },
+    const borrowRecord = await prisma.borrowing.findUnique({
+      where: { id: borrowId },
       include: {
         book: true,
         user: {
@@ -445,12 +482,11 @@ app.post('/return', authenticateToken, async (req, res) => {
 
     // Update borrow record and book availability in a transaction
     const result = await prisma.$transaction(async (tx) => {
-      const updatedBorrowRecord = await tx.borrowRecord.update({
-        where: { borrowId },
+      const updatedBorrowRecord = await tx.borrowing.update({
+        where: { id: borrowId },
         data: {
           status: 'RETURNED',
-          returnDate: today,
-          fineAmount
+          returnedAt: today
         },
         include: {
           user: {
@@ -463,8 +499,8 @@ app.post('/return', authenticateToken, async (req, res) => {
       });
 
       await tx.book.update({
-        where: { bookId: borrowRecord.bookId },
-        data: { availableCopies: { increment: 1 } }
+        where: { id: borrowRecord.bookId },
+        data: { available: true }
       });
 
       return updatedBorrowRecord;
@@ -505,7 +541,7 @@ app.get('/my-borrows/:userId', authenticateToken, async (req, res) => {
     }
 
     const [borrowRecords, total] = await Promise.all([
-      prisma.borrowRecord.findMany({
+      prisma.borrowing.findMany({
         where,
         skip: parseInt(skip),
         take: parseInt(limit),
@@ -514,9 +550,9 @@ app.get('/my-borrows/:userId', authenticateToken, async (req, res) => {
             select: { title: true, author: true, isbn: true, category: true }
           }
         },
-        orderBy: { borrowDate: 'desc' }
+        orderBy: { borrowedAt: 'desc' }
       }),
-      prisma.borrowRecord.count({ where })
+      prisma.borrowing.count({ where })
     ]);
 
     res.json({
@@ -548,7 +584,7 @@ app.get('/profile', authenticateToken, async (req, res) => {
         phone: true,
         address: true,
         membershipType: true,
-        membershipDate: true,
+        membershipType: true,
         isActive: true,
         createdAt: true
       }
