@@ -100,7 +100,11 @@ To add custom application metrics:
 
 1. **Backend (Node.js)**:
    - Add `prom-client` dependency
+<<<<<<< HEAD
    - Expose `` endpoint
+=======
+   - Expose `/metrics` endpoint
+>>>>>>> 5b5e69ce8e97c7237075b7e33f1a5f4ffab5a28a
    - Already configured in Prometheus scrape config
 
 2. **Frontend (Next.js)**:
@@ -215,4 +219,8 @@ docker-compose down -v
 For more information, refer to the official documentation:
 - [Prometheus](https://prometheus.io/docs/)
 - [Grafana](https://grafana.com/docs/)
+<<<<<<< HEAD
 - [Loki](https://grafana.com/docs/loki/)
+=======
+- [Loki](https://grafana.com/docs/loki/)
+>>>>>>> 5b5e69ce8e97c7237075b7e33f1a5f4ffab5a28a

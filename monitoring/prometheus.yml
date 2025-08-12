@@ -44,4 +44,8 @@ scrape_configs:
 alerting:
   alertmanagers:
     - static_configs:
+<<<<<<< HEAD
         - targets: []
+=======
+        - targets: []
+>>>>>>> 5b5e69ce8e97c7237075b7e33f1a5f4ffab5a28a
