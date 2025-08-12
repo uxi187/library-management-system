@@ -14,8 +14,4 @@ datasources:
     url: http://loki:3100
     editable: true
     jsonData:
-<<<<<<< HEAD
       maxLines: 1000
-=======
-      maxLines: 1000
->>>>>>> 5b5e69ce8e97c7237075b7e33f1a5f4ffab5a28a

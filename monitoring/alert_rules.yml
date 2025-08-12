@@ -53,8 +53,4 @@ groups:
           severity: warning
         annotations:
           summary: "High HTTP error rate"
-<<<<<<< HEAD
           description: "HTTP error rate is above 10% for more than 5 minutes"
-=======
-          description: "HTTP error rate is above 10% for more than 5 minutes"
->>>>>>> 5b5e69ce8e97c7237075b7e33f1a5f4ffab5a28a

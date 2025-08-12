@@ -18,11 +18,7 @@ scrape_configs:
             values: ["logging=promtail"]
     relabel_configs:
       - source_labels: ['__meta_docker_container_name']
-<<<<<<< HEAD
         regex: '/(.*)'
-=======
-        regex: '/(.*?)'
->>>>>>> 5b5e69ce8e97c7237075b7e33f1a5f4ffab5a28a
         target_label: 'container_name'
       - source_labels: ['__meta_docker_container_label_service']
         target_label: 'service'
@@ -66,8 +62,4 @@ scrape_configs:
                 format: RFC3339
                 source: timestamp
             - labels:
-<<<<<<< HEAD
                 level:
-=======
-                level:
->>>>>>> 5b5e69ce8e97c7237075b7e33f1a5f4ffab5a28a

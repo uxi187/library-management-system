@@ -48,8 +48,4 @@ ruler:
 #
 # If you would like to disable reporting, uncomment the following lines:
 #analytics:
-<<<<<<< HEAD
 #  reporting_enabled: false
-=======
-#  reporting_enabled: false
->>>>>>> 5b5e69ce8e97c7237075b7e33f1a5f4ffab5a28a
