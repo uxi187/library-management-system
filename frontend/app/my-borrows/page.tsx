@@ -46,14 +46,38 @@ const MyBorrowsPage: React.FC = () => {
       setLoading(true);
       setError('');
       
+      // Adjust filter for backend API
+      let apiFilter = filter;
+      if (filter === 'OVERDUE') {
+        // Get ACTIVE records and filter overdue on frontend
+        apiFilter = 'ACTIVE';
+      }
+      
       const response = await api.borrowing.getUserBorrows(user.userId.toString(), {
-        status: filter,
+        status: apiFilter,
         page,
         limit: 10,
       });
       
-      setBorrows(response.borrowRecords || []);
-      setPagination(response.pagination);
+      let filteredRecords = response.borrowRecords || [];
+      
+      // Frontend filtering for overdue books
+      if (filter === 'OVERDUE') {
+        filteredRecords = filteredRecords.filter(record => 
+          record.status === 'ACTIVE' && new Date(record.dueDate) < new Date()
+        );
+      } else if (filter === 'ACTIVE') {
+        // Active tab should only show truly active (not overdue) books
+        filteredRecords = filteredRecords.filter(record => 
+          record.status === 'ACTIVE' && new Date(record.dueDate) >= new Date()
+        );
+      }
+      
+      setBorrows(filteredRecords);
+      setPagination({
+        ...response.pagination,
+        total: filteredRecords.length
+      });
     } catch (err: any) {
       console.error('Error fetching borrows:', err);
       setError('Failed to load your borrowing history. Please try again later.');
@@ -226,8 +250,23 @@ const MyBorrowsPage: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
                     <div className="flex-shrink-0">
-                      <div className="h-16 w-12 bg-gradient-to-br from-primary-100 to-primary-200 rounded flex items-center justify-center">
-                        <BookOpenIcon className="h-8 w-8 text-primary-400" />
+                      <div className="h-16 w-12 bg-gradient-to-br from-primary-100 to-primary-200 rounded overflow-hidden relative">
+                        {borrow.book?.coverImageUrl ? (
+                          <img
+                            src={borrow.book.coverImageUrl}
+                            alt={`Cover of ${borrow.book.title}`}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                              const fallback = target.parentElement?.querySelector('.fallback-icon') as HTMLElement;
+                              if (fallback) fallback.style.display = 'flex';
+                            }}
+                          />
+                        ) : null}
+                        <div className={`fallback-icon absolute inset-0 flex items-center justify-center ${borrow.book?.coverImageUrl ? 'hidden' : ''}`}>
+                          <BookOpenIcon className="h-8 w-8 text-primary-400" />
+                        </div>
                       </div>
                     </div>
                     <div className="flex-1 min-w-0">

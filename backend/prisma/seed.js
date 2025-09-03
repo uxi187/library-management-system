@@ -85,6 +85,7 @@ async function main() {
         isbn: '978-0132350884',
         publishedYear: 2008,
         description: 'A comprehensive guide to writing clean, maintainable code.',
+        coverImageUrl: 'https://covers.openlibrary.org/b/isbn/9780132350884-L.jpg',
         available: true
       }
     }),
@@ -96,6 +97,7 @@ async function main() {
         isbn: '978-0596517748',
         publishedYear: 2008,
         description: 'Unearthing the excellence in JavaScript.',
+        coverImageUrl: 'https://covers.openlibrary.org/b/isbn/9780596517748-L.jpg',
         available: true
       }
     }),
@@ -107,6 +109,7 @@ async function main() {
         isbn: '978-0451524935',
         publishedYear: 1949,
         description: 'A dystopian social science fiction novel.',
+        coverImageUrl: 'https://covers.openlibrary.org/b/isbn/9780451524935-L.jpg',
         available: true
       }
     }),
@@ -118,6 +121,7 @@ async function main() {
         isbn: '978-0060935467',
         publishedYear: 1960,
         description: 'A gripping tale of racial injustice and childhood innocence.',
+        coverImageUrl: 'https://covers.openlibrary.org/b/isbn/9780060935467-L.jpg',
         available: true
       }
     }),
@@ -129,6 +133,7 @@ async function main() {
         isbn: '978-0553380163',
         publishedYear: 1988,
         description: 'A landmark volume in science writing.',
+        coverImageUrl: 'https://covers.openlibrary.org/b/isbn/9780553380163-L.jpg',
         available: true
       }
     })

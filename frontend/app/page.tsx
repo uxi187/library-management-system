@@ -183,14 +183,14 @@ const HomePage: React.FC = () => {
 
       {/* Loading State */}
       {loading && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {[...Array(8)].map((_, index) => (
-            <div key={index} className="bg-white rounded-lg shadow-md overflow-hidden animate-pulse">
-              <div className="h-48 bg-gray-300"></div>
-              <div className="p-4 space-y-3">
-                <div className="h-4 bg-gray-300 rounded w-3/4"></div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+          {[...Array(12)].map((_, index) => (
+            <div key={index} className="animate-pulse">
+              <div className="aspect-[2/3] bg-gray-300 rounded-md mb-2 h-54"></div>
+              <div className="space-y-2">
+                <div className="h-4 bg-gray-300 rounded w-full"></div>
+                <div className="h-3 bg-gray-300 rounded w-3/4"></div>
                 <div className="h-3 bg-gray-300 rounded w-1/2"></div>
-                <div className="h-3 bg-gray-300 rounded w-1/4"></div>
               </div>
             </div>
           ))}
@@ -199,52 +199,63 @@ const HomePage: React.FC = () => {
 
       {/* Books Grid */}
       {!loading && books.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
           {books.map((book) => (
             <Link
               key={book.id}
               href={`/book/${book.id}`}
-              className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-200 flex flex-col"
+              className="group block hover:shadow-lg transition-shadow duration-200"
             >
-              <div className="aspect-w-3 aspect-h-4 bg-gradient-to-br from-primary-100 to-primary-200">
-                <div className="flex items-center justify-center">
-                  <BookOpenIcon className="h-16 w-16 text-primary-400" />
+              {/* Book Cover Container */}
+              <div className="aspect-[2/3] bg-gray-100 relative overflow-hidden rounded-md shadow-sm mb-2 h-54">
+                {book.coverImageUrl ? (
+                  <img
+                    src={book.coverImageUrl}
+                    alt={`Cover of ${book.title}`}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                    onError={(e) => {
+                      // Fallback to icon if image fails to load
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = 'none';
+                      const fallback = target.parentElement?.querySelector('.fallback-icon') as HTMLElement;
+                      if (fallback) fallback.style.display = 'flex';
+                    }}
+                  />
+                ) : null}
+                <div className={`fallback-icon absolute inset-0 flex items-center justify-center ${book.coverImageUrl ? 'hidden' : ''}`}>
+                  <BookOpenIcon className="h-8 w-8 text-gray-300" />
+                </div>
+                
+                {/* Status Badge */}
+                <div className="absolute top-2 right-2">
+                  <span className={`inline-flex px-1.5 py-0.5 text-xs font-medium rounded ${
+                    book.available 
+                      ? 'bg-green-100 text-green-800' 
+                      : 'bg-red-100 text-red-800'
+                  }`}>
+                    {book.available ? 'Available' : 'Borrowed'}
+                  </span>
                 </div>
               </div>
-              <div className="p-4 flex flex-col h-full">
-                {/* Fixed height title section */}
-                <h3 className="font-semibold text-gray-900 line-clamp-2 mb-2 min-h-[3rem] flex items-start">
+              
+              {/* Book Details */}
+              <div className="space-y-1">
+                {/* Title */}
+                <h3 className="font-medium text-gray-900 text-sm leading-tight line-clamp-2 group-hover:text-primary-600 transition-colors">
                   {book.title}
                 </h3>
                 
-                {/* Flexible content section */}
-                <div className="flex-1 space-y-2 text-sm text-gray-600">
-                  <div className="flex items-center">
-                    <UserIcon className="h-4 w-4 mr-2 flex-shrink-0" />
-                    <span className="truncate">{book.author?.name || 'Unknown Author'}</span>
-                  </div>
-                  <div className="flex items-center">
-                    <TagIcon className="h-4 w-4 mr-2 flex-shrink-0" />
-                    <span className="truncate">{book.category?.name || 'Uncategorized'}</span>
-                  </div>
-                  {book.publishedYear && (
-                    <div className="flex items-center">
-                      <CalendarIcon className="h-4 w-4 mr-2 flex-shrink-0" />
-                      <span>{book.publishedYear}</span>
-                    </div>
-                  )}
-                </div>
+                {/* Author */}
+                <p className="text-gray-600 text-xs leading-tight truncate">
+                  {book.author?.name || 'Unknown Author'}
+                </p>
                 
-                {/* Fixed position status section */}
-                <div className="mt-auto pt-3 border-t border-gray-200">
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-gray-500">Status:</span>
-                    <span className={`font-medium ${
-                      book.available ? 'text-green-600' : 'text-red-600'
-                    }`}>
-                      {book.available ? 'Available' : 'Borrowed'}
-                    </span>
-                  </div>
+                {/* Category & Year - Compact */}
+                <div className="text-gray-500 text-xs">
+                  <span className="truncate">
+                    {book.category?.name || 'Uncategorized'}
+                    {book.publishedYear && ` • ${book.publishedYear}`}
+                  </span>
                 </div>
               </div>
             </Link>

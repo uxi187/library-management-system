@@ -41,6 +41,7 @@ model Book {
   isbn          String?   @unique
   publishedYear Int?
   description   String?
+  coverImageUrl String?
   available     Boolean   @default(true)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt

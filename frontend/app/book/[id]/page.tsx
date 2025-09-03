@@ -222,8 +222,23 @@ const BookDetailsPage: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 p-6">
           {/* Book Cover */}
           <div className="lg:col-span-1">
-            <div className="aspect-w-3 aspect-h-4 bg-gradient-to-br from-primary-100 to-primary-200 rounded-lg flex items-center justify-center">
-              <BookOpenIcon className="h-24 w-24 text-primary-400" />
+            <div className="h-80 max-w-xs mx-auto bg-gray-100 rounded-lg overflow-hidden relative">
+              {book.coverImageUrl ? (
+                <img
+                  src={book.coverImageUrl}
+                  alt={`Cover of ${book.title}`}
+                  className="w-full h-full object-contain"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    const fallback = target.parentElement?.querySelector('.fallback-icon') as HTMLElement;
+                    if (fallback) fallback.style.display = 'flex';
+                  }}
+                />
+              ) : null}
+              <div className={`fallback-icon absolute inset-0 flex items-center justify-center ${book.coverImageUrl ? 'hidden' : ''}`}>
+                <BookOpenIcon className="h-24 w-24 text-gray-300" />
+              </div>
             </div>
             
             {/* Availability Status */}

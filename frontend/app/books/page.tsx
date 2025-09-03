@@ -9,6 +9,7 @@ interface Book {
   publishedYear?: number
   description?: string
   available: boolean
+  coverImageUrl?: string
   author: {
     id: string
     name: string
@@ -118,56 +119,79 @@ export default function BooksPage() {
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
               {filteredBooks.map((book) => (
-                <div key={book.id} className="card hover:shadow-lg transition-shadow">
-                  <div className="flex justify-between items-start mb-3">
-                    <h3 className="text-lg font-semibold text-gray-900 line-clamp-2">
-                      {book.title}
-                    </h3>
-                    <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ml-2 ${
-                      book.available 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-red-100 text-red-800'
-                    }`}>
-                      {book.available ? 'Available' : 'Borrowed'}
-                    </span>
+                <div key={book.id} className="group block hover:shadow-lg transition-shadow duration-200">
+                  {/* Book Cover Container */}
+                                      <div className="aspect-[2/3] bg-gray-100 relative overflow-hidden rounded-md shadow-sm mb-2 h-54">
+                    {/* Book cover image - when available */}
+                    {book.coverImageUrl ? (
+                      <img
+                        src={book.coverImageUrl}
+                        alt={`Cover of ${book.title}`}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                        onError={(e) => {
+                          // Fallback to icon if image fails to load
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                          const fallback = target.parentElement?.querySelector('.fallback-icon') as HTMLElement;
+                          if (fallback) fallback.style.display = 'flex';
+                        }}
+                      />
+                    ) : null}
+                    
+                    {/* Placeholder icon when no cover image */}
+                    <div className={`fallback-icon absolute inset-0 flex items-center justify-center ${book.coverImageUrl ? 'hidden' : ''}`}>
+                      <svg className="h-8 w-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                      </svg>
+                    </div>
+                    
+                    {/* Status Badge */}
+                    <div className="absolute top-2 right-2">
+                      <span className={`inline-flex px-1.5 py-0.5 text-xs font-medium rounded ${
+                        book.available 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-red-100 text-red-800'
+                      }`}>
+                        {book.available ? 'Available' : 'Borrowed'}
+                      </span>
+                    </div>
                   </div>
                   
-                  <div className="space-y-2 mb-4">
-                    <p className="text-gray-600">
-                      <span className="font-medium">Author:</span> {book.author.name}
+                  {/* Book Details */}
+                  <div className="space-y-1">
+                    {/* Title */}
+                    <h3 className="font-medium text-gray-900 text-sm leading-tight line-clamp-2 group-hover:text-blue-600 transition-colors">
+                      {book.title}
+                    </h3>
+                    
+                    {/* Author */}
+                    <p className="text-gray-600 text-xs leading-tight truncate">
+                      {book.author.name}
                     </p>
-                    <p className="text-gray-600">
-                      <span className="font-medium">Category:</span> {book.category.name}
-                    </p>
-                    {book.publishedYear && (
-                      <p className="text-gray-600">
-                        <span className="font-medium">Year:</span> {book.publishedYear}
-                      </p>
-                    )}
-                    {book.isbn && (
-                      <p className="text-gray-600 text-sm">
-                        <span className="font-medium">ISBN:</span> {book.isbn}
-                      </p>
-                    )}
+                    
+                    {/* Category & Year - Compact */}
+                    <div className="text-gray-500 text-xs">
+                      <span className="truncate">
+                        {book.category.name}
+                        {book.publishedYear && ` • ${book.publishedYear}`}
+                      </span>
+                    </div>
                   </div>
 
-                  {book.description && (
-                    <p className="text-gray-600 text-sm mb-4 line-clamp-3">
-                      {book.description}
-                    </p>
-                  )}
-
-                  <div className="flex gap-2">
-                    <button className="btn-primary flex-1 text-sm">
-                      View Details
-                    </button>
-                    {book.available && (
-                      <button className="btn-secondary text-sm">
-                        Borrow
+                  {/* Action Buttons - Show on Hover */}
+                  <div className="mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                    <div className="flex gap-1">
+                      <button className="btn-primary flex-1 text-xs py-1 px-2">
+                        View
                       </button>
-                    )}
+                      {book.available && (
+                        <button className="btn-secondary text-xs py-1 px-2">
+                          Borrow
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}

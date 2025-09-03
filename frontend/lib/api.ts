@@ -63,6 +63,7 @@ export interface Book {
   isbn?: string;
   publishedYear?: number;
   description?: string;
+  coverImageUrl?: string;
   available: boolean;
   createdAt: string;
   updatedAt: string;
@@ -101,6 +102,7 @@ export interface BorrowRecord {
   };
   book?: {
     title: string;
+    coverImageUrl?: string;
     author: {
       id: string;
       name: string;
