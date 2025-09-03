@@ -105,6 +105,10 @@ const BookDetailsPage: React.FC = () => {
     }
   };
 
+  const isOverdue = (dueDate: string, status: string): boolean => {
+    return status === 'ACTIVE' && new Date(dueDate) < new Date();
+  };
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -163,7 +167,7 @@ const BookDetailsPage: React.FC = () => {
     );
   }
 
-  const userHasBorrowed = book.borrowings?.some(
+  const userBorrowRecord = book.borrowings?.find(
     record => {
       // Handle both string and number comparisons
       const recordUserId = String(record.userId);
@@ -171,6 +175,8 @@ const BookDetailsPage: React.FC = () => {
       return recordUserId === currentUserId && record.status === 'ACTIVE';
     }
   );
+
+  const userHasBorrowed = !!userBorrowRecord;
 
   const hasActiveBorrowers = book.borrowings?.some(
     record => record.status === 'ACTIVE' || record.status === 'OVERDUE'
@@ -226,19 +232,13 @@ const BookDetailsPage: React.FC = () => {
               <div className="flex justify-between items-center mb-2">
                 <span className="text-gray-600">Status:</span>
                 <span className={`font-medium ${
-                  user && book.borrowings?.some(record => {
-                    const recordUserId = String(record.userId);
-                    const currentUserId = String(user?.userId);
-                    return recordUserId === currentUserId && record.status === 'ACTIVE';
-                  }) ? 'text-blue-600' : 
+                  userBorrowRecord && isOverdue(userBorrowRecord.dueDate, userBorrowRecord.status) ? 'text-red-600' :
+                  userHasBorrowed ? 'text-blue-600' : 
                   book.borrowings?.some(record => record.status === 'ACTIVE' || record.status === 'OVERDUE') ? 'text-yellow-600' : 
                   book.available ? 'text-green-600' : 'text-red-600'
                 }`}>
-                  {user && book.borrowings?.some(record => {
-                    const recordUserId = String(record.userId);
-                    const currentUserId = String(user?.userId);
-                    return recordUserId === currentUserId && record.status === 'ACTIVE';
-                  }) ? 'Borrowed by you' : 
+                  {userBorrowRecord && isOverdue(userBorrowRecord.dueDate, userBorrowRecord.status) ? 'OVERDUE - Borrowed by you' :
+                   userHasBorrowed ? 'Borrowed by you' : 
                    book.borrowings?.some(record => record.status === 'ACTIVE' || record.status === 'OVERDUE') ? 'Borrowed' : 
                    book.available ? 'Available' : 'Unavailable'}
                 </span>
@@ -361,8 +361,10 @@ const BookDetailsPage: React.FC = () => {
                           </div>
                         </div>
                       </div>
-                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(record.status)}`}>
-                        {record.status}
+                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                        isOverdue(record.dueDate, record.status) ? getStatusColor('OVERDUE') : getStatusColor(record.status)
+                      }`}>
+                        {isOverdue(record.dueDate, record.status) ? 'OVERDUE' : record.status}
                       </span>
                     </div>
                   ))}

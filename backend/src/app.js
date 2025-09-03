@@ -418,7 +418,7 @@ app.post('/borrow', authenticateToken, async (req, res) => {
             select: { firstName: true, lastName: true, email: true }
           },
           book: {
-            select: { title: true, author: true, isbn: true }
+            include: { author: true }
           }
         }
       });
@@ -493,7 +493,7 @@ app.post('/return', authenticateToken, async (req, res) => {
             select: { firstName: true, lastName: true, email: true }
           },
           book: {
-            select: { title: true, author: true, isbn: true }
+            include: { author: true }
           }
         }
       });
@@ -547,7 +547,7 @@ app.get('/my-borrows/:userId', authenticateToken, async (req, res) => {
         take: parseInt(limit),
         include: {
           book: {
-            select: { title: true, author: true, isbn: true, category: true }
+            include: { author: true, category: true }
           }
         },
         orderBy: { borrowedAt: 'desc' }

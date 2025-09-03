@@ -52,7 +52,7 @@ create_env_files() {
     if [ ! -f "backend/.env" ]; then
         cat > backend/.env << EOL
 # Database
-DATABASE_URL="postgresql://postgres:password@db:5432/library_db?schema=public"
+DATABASE_URL="postgresql://admin:admin123@db:5432/library_db?schema=public"
 
 # Server Configuration
 PORT=5000
@@ -72,7 +72,7 @@ EOL
     # Frontend .env.local
     if [ ! -f "frontend/.env.local" ]; then
         cat > frontend/.env.local << EOL
-NEXT_PUBLIC_API_URL=http://localhost:5000
+NEXT_PUBLIC_API_URL=http://localhost:3001
 EOL
         print_success "Created frontend/.env.local file"
     else

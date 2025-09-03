@@ -186,29 +186,36 @@ async function main() {
   ]);
 
   // Create some borrow records and update book availability
+  const now = new Date();
   const borrowRecords = await Promise.all([
+    // John Doe borrows Clean Code - OVERDUE (borrowed 20 days ago, due 5 days ago)
     prisma.borrowing.create({
       data: {
-        userId: users[1].userId,
-        bookId: books[0].id,
-        dueDate: new Date('2024-01-29'),
+        userId: users[1].userId, // John Doe
+        bookId: books[0].id, // Clean Code
+        borrowedAt: new Date(now.getTime() - (20 * 24 * 60 * 60 * 1000)), // 20 days ago
+        dueDate: new Date(now.getTime() - (5 * 24 * 60 * 60 * 1000)), // 5 days ago (OVERDUE)
         status: 'ACTIVE'
       }
     }),
+    // Jane Smith borrowed and returned To Kill a Mockingbird - RETURNED
     prisma.borrowing.create({
       data: {
-        userId: users[2].userId,
-        bookId: books[3].id,
-        dueDate: new Date('2024-01-24'),
-        returnedAt: new Date('2024-01-23'),
+        userId: users[2].userId, // Jane Smith  
+        bookId: books[3].id, // To Kill a Mockingbird
+        borrowedAt: new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000)), // 30 days ago
+        dueDate: new Date(now.getTime() - (16 * 24 * 60 * 60 * 1000)), // 16 days ago
+        returnedAt: new Date(now.getTime() - (17 * 24 * 60 * 60 * 1000)), // 17 days ago (returned on time)
         status: 'RETURNED'
       }
     }),
+    // Jane Smith borrows JavaScript book - ACTIVE (not overdue yet)
     prisma.borrowing.create({
       data: {
-        userId: users[2].userId,
-        bookId: books[1].id,
-        dueDate: new Date('2024-02-03'),
+        userId: users[2].userId, // Jane Smith
+        bookId: books[1].id, // JavaScript: The Good Parts
+        borrowedAt: new Date(now.getTime() - (5 * 24 * 60 * 60 * 1000)), // 5 days ago
+        dueDate: new Date(now.getTime() + (9 * 24 * 60 * 60 * 1000)), // 9 days from now (due in 9 days)
         status: 'ACTIVE'
       }
     })

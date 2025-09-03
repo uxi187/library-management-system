@@ -104,7 +104,7 @@ Library App/
 
 3. **Access the application**:
    - Frontend: http://localhost:3000
-   - Backend API: http://localhost:5000
+   - Backend API: http://localhost:3001
    - Database: localhost:5432
 
 ### Manual Setup
@@ -115,7 +115,7 @@ If you prefer manual setup:
 
    **Backend** (`backend/.env`):
    ```env
-   DATABASE_URL="postgresql://postgres:password@db:5432/library_db?schema=public"
+   DATABASE_URL="postgresql://admin:admin123@db:5432/library_db?schema=public"
    PORT=5000
    NODE_ENV=development
    FRONTEND_URL=http://localhost:3000
@@ -124,7 +124,7 @@ If you prefer manual setup:
 
    **Frontend** (`frontend/.env.local`):
    ```env
-   NEXT_PUBLIC_API_URL=http://localhost:5000
+   NEXT_PUBLIC_API_URL=http://localhost:3001
    ```
 
 2. **Start services**:
@@ -253,14 +253,15 @@ The application uses the following main entities:
 
 ### Environment Variables for Production
 
-**Backend**:
-- `DATABASE_URL`: PostgreSQL connection string
+**Backend** (`backend/.env`):
+- `DATABASE_URL`: PostgreSQL connection string (use admin:admin123 credentials)
 - `JWT_SECRET`: Strong JWT secret
 - `NODE_ENV`: Set to `production`
 - `FRONTEND_URL`: Production frontend URL
+- `PORT`: 5000 (internal container port)
 
-**Frontend**:
-- `NEXT_PUBLIC_API_URL`: Production API URL
+**Frontend** (`frontend/.env.local`):
+- `NEXT_PUBLIC_API_URL`: Production API URL (port 3001 for local, adjust for production)
 
 ## 📈 Performance Considerations
 
